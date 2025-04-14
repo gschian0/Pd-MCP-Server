@@ -1,0 +1,1904 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Pure Data Patch",
+    "description": "Enhanced JSON schema representing a Pure Data (Pd) patch structure with full compatibility for Pd-vanilla",
+    "type": "object",
+    "required": ["version", "canvas", "objects", "connections"],
+    "additionalProperties": false,
+    "properties": {
+      "version": {
+        "type": "string",
+        "description": "Version of the schema"
+      },
+      "canvas": {
+        "description": "The main patch canvas settings",
+        "type": "object",
+        "required": ["x", "y", "width", "height"],
+        "additionalProperties": false,
+        "properties": {
+          "x": {
+            "type": "integer",
+            "description": "X position of the canvas"
+          },
+          "y": {
+            "type": "integer",
+            "description": "Y position of the canvas"
+          },
+          "width": {
+            "type": "integer",
+            "description": "Width of the canvas",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "description": "Height of the canvas",
+            "minimum": 1
+          },
+          "zoom": {
+            "type": "number",
+            "description": "Zoom level of the canvas",
+            "default": 1.0
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the patch"
+          },
+          "font_size": {
+            "type": "integer",
+            "description": "Font size used in the canvas",
+            "enum": [8, 10, 12, 16, 24, 36]
+          },
+          "background_color": {
+            "type": "array",
+            "description": "RGB background color",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "foreground_color": {
+            "type": "array",
+            "description": "RGB foreground color",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "graph_on_parent": {
+            "type": "boolean",
+            "description": "Whether the canvas is a graph displayed on its parent canvas",
+            "default": false
+          },
+          "hide_name_and_args": {
+            "type": "boolean",
+            "description": "Whether to hide the name and arguments of the canvas",
+            "default": false
+          },
+          "gop_rect": {
+            "type": "object",
+            "description": "Graph-on-parent rectangle for visibility",
+            "required": ["x1", "y1", "x2", "y2"],
+            "additionalProperties": false,
+            "properties": {
+              "x1": {"type": "integer", "description": "Left edge of GOP rectangle"},
+              "y1": {"type": "integer", "description": "Top edge of GOP rectangle"},
+              "x2": {"type": "integer", "description": "Right edge of GOP rectangle"},
+              "y2": {"type": "integer", "description": "Bottom edge of GOP rectangle"}
+            }
+          },
+          "subpatches": {
+            "type": "array",
+            "description": "Subpatches within this canvas",
+            "items": {
+              "$ref": "#"
+            }
+          }
+        }
+      },
+      "objects": {
+        "type": "array",
+        "description": "Collection of objects in the patch",
+        "items": {
+          "type": "object",
+          "required": ["id", "type", "position"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the object"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the Pd object (e.g., 'osc~', 'dac~', 'phasor~')"
+            },
+            "args": {
+              "type": "array",
+              "description": "Arguments for the object",
+              "items": {
+                "oneOf": [
+                  { "type": "string" },
+                  { "type": "number" },
+                  { "type": "integer" }
+                ]
+              }
+            },
+            "position": {
+              "type": "object",
+              "required": ["x", "y"],
+              "additionalProperties": false,
+              "properties": {
+                "x": {
+                  "type": "integer",
+                  "description": "X position on the canvas"
+                },
+                "y": {
+                  "type": "integer",
+                  "description": "Y position on the canvas"
+                }
+              }
+            },
+            "size": {
+              "type": "object",
+              "description": "Size of the object if customizable",
+              "required": ["width", "height"],
+              "additionalProperties": false,
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "description": "Width of the object",
+                  "minimum": 1
+                },
+                "height": {
+                  "type": "integer",
+                  "description": "Height of the object",
+                  "minimum": 1
+                }
+              }
+            },
+            "signal_rate": {
+              "type": "string",
+              "description": "Signal processing rate",
+              "enum": ["audio", "control"]
+            },
+            "gui_properties": {
+              "type": "object",
+              "description": "Optional GUI properties for the object",
+              "additionalProperties": false,
+              "properties": {
+                "background_color": {
+                  "type": "array",
+                  "description": "RGB background color",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "foreground_color": {
+                  "type": "array",
+                  "description": "RGB foreground color",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "label_color": {
+                  "type": "array",
+                  "description": "RGB label color",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "font_size": {
+                  "type": "integer",
+                  "description": "Font size for the object's text",
+                  "enum": [8, 10, 12, 16, 24, 36]
+                },
+                "label_position": {
+                  "type": "string",
+                  "description": "Position of the label relative to the object",
+                  "enum": ["left", "right", "top", "bottom", "inside"]
+                },
+                "visible": {
+                  "type": "boolean",
+                  "description": "Whether the object is visible",
+                  "default": true
+                }
+              }
+            },
+            "comment": {
+              "type": "string",
+              "description": "Optional comment for the object"
+            },
+            "external": {
+              "type": "boolean",
+              "description": "Whether this object is an external (not part of Pd-vanilla)",
+              "default": false
+            },
+            "libs_required": {
+              "type": "array",
+              "description": "External libraries required by this object (if it's an external)",
+              "items": {
+                "type": "string"
+              }
+            },
+            "lists": {
+              "type": "array",
+              "description": "Message-based sequencing lists associated with this object",
+              "items": {
+                "type": "object",
+                "required": ["message", "delay"],
+                "additionalProperties": false,
+                "properties": {
+                  "message": {
+                    "type": "array",
+                    "description": "The message content",
+                    "items": {
+                      "oneOf": [
+                        { "type": "string" },
+                        { "type": "number" },
+                        { "type": "integer" }
+                      ]
+                    }
+                  },
+                  "delay": {
+                    "type": "number",
+                    "description": "Delay time in milliseconds before sending the message",
+                    "minimum": 0
+                  },
+                  "repeat": {
+                    "type": "boolean",
+                    "description": "Whether the message should repeat",
+                    "default": false
+                  },
+                  "repeat_interval": {
+                    "type": "number",
+                    "description": "Interval time in milliseconds between repeated messages",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "object_properties": {
+              "type": "object",
+              "description": "Additional properties specific to this object type",
+              "additionalProperties": true
+            },
+            "inlets": {
+              "type": "array",
+              "description": "Inlet definitions for the object",
+              "items": {
+                "type": "object",
+                "required": ["type"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Type of inlet (signal or control)",
+                    "enum": ["signal", "control"]
+                  },
+                  "position": {
+                    "type": "integer",
+                    "description": "Position of inlet from left (0-based)",
+                    "minimum": 0
+                  },
+                  "hot": {
+                    "type": "boolean",
+                    "description": "Whether this is a hot inlet (triggers computation)",
+                    "default": false
+                  }
+                }
+              }
+            },
+            "outlets": {
+              "type": "array",
+              "description": "Outlet definitions for the object",
+              "items": {
+                "type": "object",
+                "required": ["type"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "Type of outlet (signal or control)",
+                    "enum": ["signal", "control"]
+                  },
+                  "position": {
+                    "type": "integer",
+                    "description": "Position of outlet from left (0-based)",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "connections": {
+        "type": "array",
+        "description": "Connections between objects in the patch",
+        "items": {
+          "type": "object",
+          "required": ["source", "destination"],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "object",
+              "required": ["id", "port"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ID of the source object"
+                },
+                "port": {
+                  "type": "integer",
+                  "description": "Outlet port number (0-based)",
+                  "minimum": 0
+                }
+              }
+            },
+            "destination": {
+              "type": "object",
+              "required": ["id", "port"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ID of the destination object"
+                },
+                "port": {
+                  "type": "integer",
+                  "description": "Inlet port number (0-based)",
+                  "minimum": 0
+                }
+              }
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of connection",
+              "enum": ["signal", "control"],
+              "default": "control"
+            },
+            "color": {
+              "type": "array",
+              "description": "RGB color for the connection line",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          }
+        }
+      },
+      "gui_elements": {
+        "type": "array",
+        "description": "GUI elements in the patch (sliders, toggles, number boxes, etc.)",
+        "items": {
+          "type": "object",
+          "required": ["id", "type", "position"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the GUI element"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of GUI element",
+              "enum": ["slider", "hslider", "vslider", "bang", "toggle", "number", "numberbox", "symbolbox", "vradio", "hradio", "vu", "canvas", "graph", "array", "panel", "comment"]
+            },
+            "position": {
+              "type": "object",
+              "required": ["x", "y"],
+              "additionalProperties": false,
+              "properties": {
+                "x": {
+                  "type": "integer",
+                  "description": "X position on the canvas"
+                },
+                "y": {
+                  "type": "integer",
+                  "description": "Y position on the canvas"
+                }
+              }
+            },
+            "size": {
+              "type": "object",
+              "description": "Size of the GUI element",
+              "required": ["width", "height"],
+              "additionalProperties": false,
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "description": "Width of the GUI element",
+                  "minimum": 1
+                },
+                "height": {
+                  "type": "integer",
+                  "description": "Height of the GUI element",
+                  "minimum": 1
+                }
+              }
+            },
+            "min": {
+              "type": "number",
+              "description": "Minimum value of the GUI element"
+            },
+            "max": {
+              "type": "number",
+              "description": "Maximum value of the GUI element"
+            },
+            "log_scale": {
+              "type": "boolean",
+              "description": "Whether the slider uses logarithmic scaling",
+              "default": false
+            },
+            "init": {
+              "type": "boolean",
+              "description": "Whether to initialize with the saved value",
+              "default": false
+            },
+            "current_value": {
+              "description": "Current value of the GUI element",
+              "oneOf": [
+                { "type": "number" },
+                { "type": "string" },
+                { "type": "boolean" }
+              ]
+            },
+            "label": {
+              "type": "string",
+              "description": "Display label for the GUI element"
+            },
+            "label_position": {
+              "type": "string",
+              "description": "Position of the label relative to the GUI element",
+              "enum": ["left", "right", "top", "bottom", "inside"]
+            },
+            "send_symbol": {
+              "type": "string",
+              "description": "Symbol name to send values to"
+            },
+            "receive_symbol": {
+              "type": "string",
+              "description": "Symbol name to receive values from"
+            },
+            "background_color": {
+              "type": "array",
+              "description": "RGB background color",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "foreground_color": {
+              "type": "array",
+              "description": "RGB foreground color",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "label_color": {
+              "type": "array",
+              "description": "RGB label color",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "bang_mode": {
+              "type": "string",
+              "description": "Mode for bang objects",
+              "enum": ["flash", "hold", "toggle"],
+              "default": "flash"
+            },
+            "visible": {
+              "type": "boolean",
+              "description": "Whether the GUI element is visible",
+              "default": true
+            },
+            "steady": {
+              "type": "boolean",
+              "description": "For sliders, whether to jump to mouse position (false) or move steadily (true)",
+              "default": true
+            },
+            "hold_time": {
+              "type": "number",
+              "description": "For bangs, how long to hold the flash (in ms)",
+              "minimum": 0
+            },
+            "interrupt_time": {
+              "type": "number",
+              "description": "For bangs, minimum interruption time between flashes (in ms)",
+              "minimum": 0
+            },
+            "widget_behavior": {
+              "type": "object",
+              "description": "Widget behavior specific to this GUI element type",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "data_structures": {
+        "type": "array",
+        "description": "Data structures, lists, arrays, and tables in the patch",
+        "items": {
+          "type": "object",
+          "required": ["id", "type"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the data structure"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of data structure",
+              "enum": ["array", "table", "scalar", "list", "template"]
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the data structure"
+            },
+            "size": {
+              "type": "integer",
+              "description": "Size of the array or table",
+              "minimum": 1
+            },
+            "data": {
+              "type": "array",
+              "description": "Actual data values",
+              "items": {
+                "type": "number"
+              }
+            },
+            "template": {
+              "type": "object",
+              "description": "Template structure for scalars and templates",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the template"
+                },
+                "fields": {
+                  "type": "array",
+                  "description": "Fields in the template",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "type"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the field"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "Data type of the field",
+                        "enum": ["float", "symbol", "array", "list"]
+                      },
+                      "size": {
+                        "type": "integer",
+                        "description": "Size of the field if it's an array",
+                        "minimum": 1
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "drawing": {
+              "type": "object",
+              "description": "Drawing properties for graph display",
+              "additionalProperties": false,
+              "properties": {
+                "style": {
+                  "type": "string",
+                  "description": "Drawing style",
+                  "enum": ["points", "line", "curve", "bars", "polygon"]
+                },
+                "width": {
+                  "type": "integer",
+                  "description": "Line width for display",
+                  "minimum": 1
+                },
+                "color": {
+                  "type": "array",
+                  "description": "RGB color for drawing",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "range": {
+                  "type": "array",
+                  "description": "Y-axis range [min, max]",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            },
+            "scalar_values": {
+              "type": "object",
+              "description": "Value storage for scalar objects",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "remote_control": {
+        "type": "object",
+        "description": "Remote control configuration for the patch",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether remote control is enabled",
+            "default": false
+          },
+          "protocols": {
+            "type": "array",
+            "description": "Communication protocols enabled",
+            "items": {
+              "type": "string",
+              "enum": ["osc", "tcp", "udp", "midi"]
+            }
+          },
+          "network": {
+            "type": "object",
+            "description": "Network settings for remote control",
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "type": "string",
+                "description": "Host address for network communication"
+              },
+              "send_port": {
+                "type": "integer",
+                "description": "Port to send messages on",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "receive_port": {
+                "type": "integer",
+                "description": "Port to receive messages on",
+                "minimum": 1,
+                "maximum": 65535
+              },
+              "multicast": {
+                "type": "boolean",
+                "description": "Whether to use multicast for UDP",
+                "default": false
+              },
+              "osc_path": {
+                "type": "string",
+                "description": "Base OSC path for this patch"
+              },
+              "ipv6": {
+                "type": "boolean",
+                "description": "Whether to use IPv6",
+                "default": false
+              }
+            }
+          },
+          "expose": {
+            "type": "array",
+            "description": "Object IDs to expose for remote control",
+            "items": {
+              "type": "object",
+              "required": ["id", "path"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ID of the object to expose"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path to access the object remotely"
+                },
+                "direction": {
+                  "type": "string",
+                  "description": "Communication direction",
+                  "enum": ["input", "output", "both"],
+                  "default": "both"
+                }
+              }
+            }
+          }
+        }
+      },
+      "midi": {
+        "type": "object",
+        "description": "MIDI configuration for the patch",
+        "additionalProperties": false,
+        "properties": {
+          "input_devices": {
+            "type": "array",
+            "description": "MIDI input devices",
+            "items": {
+              "type": "object",
+              "required": ["id"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Device ID",
+                  "minimum": 0
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Device name"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Whether this device is enabled",
+                  "default": true
+                },
+                "channels": {
+                  "type": "array",
+                  "description": "MIDI channels to listen on (empty means all)",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 16
+                  }
+                }
+              }
+            }
+          },
+          "output_devices": {
+            "type": "array",
+            "description": "MIDI output devices",
+            "items": {
+              "type": "object",
+              "required": ["id"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Device ID",
+                  "minimum": 0
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Device name"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Whether this device is enabled",
+                  "default": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "dsp_settings": {
+        "type": "object",
+        "description": "DSP configuration for the patch",
+        "additionalProperties": false,
+        "properties": {
+          "sample_rate": {
+            "type": "integer",
+            "description": "Sample rate in Hz",
+            "minimum": 1
+          },
+          "block_size": {
+            "type": "integer",
+            "description": "Signal block size in samples",
+            "minimum": 1
+          },
+          "audio_api": {
+            "type": "string",
+            "description": "Audio API in use",
+            "enum": ["portaudio", "jack", "alsa", "mmio", "asio", "dummy", "oss", "esd"]
+          },
+          "audio_devices": {
+            "type": "object",
+            "description": "Audio device configuration",
+            "additionalProperties": false,
+            "properties": {
+              "input": {
+                "type": "object",
+                "description": "Input device configuration",
+                "additionalProperties": false,
+                "properties": {
+                  "device_id": {
+                    "type": "integer",
+                    "description": "Input device ID",
+                    "minimum": -1
+                  },
+                  "channels": {
+                    "type": "integer",
+                    "description": "Number of input channels",
+                    "minimum": 0
+                  }
+                }
+              },
+              "output": {
+                "type": "object",
+                "description": "Output device configuration",
+                "additionalProperties": false,
+                "properties": {
+                  "device_id": {
+                    "type": "integer",
+                    "description": "Output device ID",
+                    "minimum": -1
+                  },
+                  "channels": {
+                    "type": "integer",
+                    "description": "Number of output channels",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          },
+          "schedulers": {
+            "type": "array",
+            "description": "DSP scheduler configuration",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Type of scheduler",
+                  "enum": ["callback", "polling", "external"]
+                },
+                "priority": {
+                  "type": "string",
+                  "description": "Thread priority",
+                  "enum": ["high", "normal", "low"]
+                },
+                "advance_time": {
+                  "type": "number",
+                  "description": "Scheduler advance time in milliseconds",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "file_io": {
+        "type": "object",
+        "description": "File I/O and persistence configuration",
+        "additionalProperties": false,
+        "properties": {
+          "save_path": {
+            "type": "string",
+            "description": "Path where the patch is saved"
+          },
+          "externals_path": {
+            "type": "array",
+            "description": "Paths to search for externals",
+            "items": {
+              "type": "string"
+            }
+          },
+          "search_paths": {
+            "type": "array",
+            "description": "Additional search paths for abstractions and files",
+            "items": {
+              "type": "string"
+            }
+          },
+          "audio_files": {
+            "type": "array",
+            "description": "Audio files referenced by the patch",
+            "items": {
+              "type": "object",
+              "required": ["id", "path"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Identifier for the audio file"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path to the audio file"
+                },
+                "format": {
+                  "type": "string",
+                  "description": "Audio file format",
+                  "enum": ["wav", "aiff", "mp3", "flac", "ogg", "raw", "next", "caf"]
+                },
+                "channels": {
+                  "type": "integer",
+                  "description": "Number of audio channels",
+                  "minimum": 1
+                },
+                "sample_rate": {
+                  "type": "integer",
+                  "description": "Sample rate in Hz",
+                  "minimum": 1
+                },
+                "bit_depth": {
+                  "type": "integer",
+                  "description": "Bit depth of the audio",
+                  "enum": [8, 16, 24, 32]
+                }
+              }
+            }
+          },
+          "data_files": {
+            "type": "array",
+            "description": "Data files referenced by the patch",
+            "items": {
+              "type": "object",
+              "required": ["id", "path"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Identifier for the data file"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path to the data file"
+                },
+                "format": {
+                  "type": "string",
+                  "description": "Data file format"
+                }
+              }
+            }
+          },
+          "abstractions": {
+            "type": "array",
+            "description": "Abstraction patches used in this patch",
+            "items": {
+              "type": "object",
+              "required": ["id", "path"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Identifier for the abstraction"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path to the abstraction file"
+                },
+                "arguments": {
+                  "type": "array",
+                  "description": "Creation arguments for the abstraction",
+                  "items": {
+                    "oneOf": [
+                      { "type": "string" },
+                      { "type": "number" },
+                      { "type": "integer" }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "autoload_externals": {
+            "type": "boolean",
+            "description": "Whether to automatically load missing external dependencies",
+            "default": false
+          },
+          "external_loading_config": {
+            "type": "object", 
+            "description": "Configuration for external loading behavior",
+            "additionalProperties": false,
+            "properties": {
+              "load_on_startup": {
+                "type": "boolean",
+                "description": "Whether to load all externals during patch initialization",
+                "default": true
+              },
+              "skip_loaded": {
+                "type": "boolean",
+                "description": "Whether to skip externals that are already loaded in the environment",
+                "default": true
+              },
+              "error_handling": {
+                "type": "string",
+                "description": "How to handle errors when loading externals",
+                "enum": ["ignore", "warn", "error", "substitute"],
+                "default": "warn"
+              },
+              "substitute_objects": {
+                "type": "array",
+                "description": "Substitution objects to use if an external cannot be loaded",
+                "items": {
+                  "type": "object",
+                  "required": ["missing_object", "substitute_object"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "missing_object": {
+                      "type": "string",
+                      "description": "Name of the external that might be missing"
+                    },
+                    "substitute_object": {
+                      "type": "string",
+                      "description": "Object to use as a replacement"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "mcp_commands": {
+        "type": "array",
+        "description": "Dynamic commands for real-time modifications via MCP",
+        "items": {
+          "type": "object",
+          "required": ["event"],
+          "additionalProperties": false,
+          "properties": {
+            "event": {
+              "type": "string",
+              "description": "Type of event/command",
+              "enum": [
+                "create_object", "delete_object", "move_object", "connect_objects", 
+                "disconnect_objects", "set_param", "get_param", "register_gui_callback",
+                "send_message", "receive_message", "add_to_array", "clear_array",
+                "load_patch", "save_patch", "start_dsp", "stop_dsp", "reload_external",
+                "set_dsp_state", "set_audio_settings", "set_midi_settings", "execute_message",
+                "query_object_state", "set_array_data", "get_array_data", "create_subpatch"
+              ]
+            },
+            "target": {
+              "type": "string",
+              "description": "ID of the affected object"
+            },
+            "parameter": {
+              "type": "string",
+              "description": "Parameter being changed (if applicable)"
+            },
+            "value": {
+              "description": "New value for the parameter",
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "array" },
+                { "type": "object" }
+              ]
+            },
+            "timestamp": {
+              "type": "number",
+              "description": "Optional timestamp for scheduling events (in milliseconds)"
+            },
+            "callback_id": {
+              "type": "string",
+              "description": "Identifier for callback registration"
+            },
+            "source": {
+              "type": "object",
+              "description": "Source object for connections",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ID of the source object"
+                },
+                "port": {
+                  "type": "integer",
+                  "description": "Outlet port number (0-based)",
+                  "minimum": 0
+                }
+              }
+            },
+            "destination": {
+              "type": "object",
+              "description": "Destination object for connections",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ID of the destination object"
+                },
+                "port": {
+                  "type": "integer",
+                  "description": "Inlet port number (0-based)",
+                  "minimum": 0
+                }
+              }
+            },
+            "network": {
+              "type": "object",
+              "description": "Network-related settings for this command",
+              "additionalProperties": false,
+              "properties": {
+                "protocol": {
+                  "type": "string",
+                  "description": "Network protocol to use",
+                  "enum": ["osc", "tcp", "udp", "midi"]
+                },
+                "host": {
+                  "type": "string",
+                  "description": "Target host for the command"
+                },
+                "port": {
+                  "type": "integer",
+                  "description": "Target port for the command",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                "path": {
+                  "type": "string",
+                  "description": "OSC path for the command"
+                }
+              }
+            }
+          }
+        }
+      },
+      "scheduling": {
+        "type": "object",
+        "description": "Timing and scheduling information for the patch",
+        "additionalProperties": false,
+        "properties": {
+          "clocks": {
+            "type": "array",
+            "description": "Clock objects in the patch",
+            "items": {
+              "type": "object",
+              "required": ["id", "owner"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the clock"
+                },
+                "owner": {
+                  "type": "string",
+                  "description": "ID of the object that owns this clock"
+                },
+                "delay": {
+                  "type": "number",
+                  "description": "Delay time in milliseconds",
+                  "minimum": 0
+                },
+                "scheduled_time": {
+                  "type": "number",
+                  "description": "Scheduled logical time for the clock to trigger"
+                },
+                "unit": {
+                  "type": "string",
+                  "description": "Time unit for the clock",
+                  "enum": ["milliseconds", "samples"]
+                }
+              }
+            }
+          },
+          "delays": {
+            "type": "array",
+            "description": "Delay and timing elements",
+            "items": {
+              "type": "object",
+              "required": ["id", "delay_time"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the delay element"
+                },
+                "delay_time": {
+                  "type": "number",
+                  "description": "Delay time in milliseconds or samples",
+                  "minimum": 0
+                },
+                "unit": {
+                  "type": "string",
+                  "description": "Time unit",
+                  "enum": ["milliseconds", "samples"]
+                },
+                "tap_tempo": {
+                  "type": "boolean",
+                  "description": "Whether this delay supports tap tempo",
+                  "default": false
+                }
+              }
+            }
+          },
+          "metro": {
+            "type": "array",
+            "description": "Metro objects in the patch",
+            "items": {
+              "type": "object",
+              "required": ["id", "interval"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the metro"
+                },
+                "interval": {
+                  "type": "number",
+                  "description": "Interval time in milliseconds",
+                  "minimum": 0
+                },
+                "active": {
+                  "type": "boolean",
+                  "description": "Whether the metro is currently active",
+                  "default": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "presets": {
+        "type": "array",
+        "description": "Preset states for the patch",
+        "items": {
+          "type": "object",
+          "required": ["name", "values"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the preset"
+            },
+            "name": { 
+              "type": "string", 
+              "description": "Human-readable preset name" 
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional description of the preset"
+            },
+            "values": { 
+              "type": "object", 
+              "description": "Stored parameter values by object ID", 
+              "additionalProperties": {
+                "type": "object",
+                "description": "Parameter values for a specific object",
+                "additionalProperties": true
+              }
+            },
+            "category": {
+              "type": "string",
+              "description": "Optional category for grouping presets"
+            },
+            "tags": {
+              "type": "array",
+              "description": "Optional tags for the preset",
+              "items": {
+                "type": "string"
+              }
+            },
+            "created": {
+              "type": "string",
+              "description": "ISO timestamp of preset creation",
+              "format": "date-time"
+            },
+            "modified": {
+              "type": "string",
+              "description": "ISO timestamp of last modification",
+              "format": "date-time"
+            }
+          }
+        }
+      },
+      "midi_mappings": {
+        "type": "array",
+        "description": "Mappings of MIDI controls to patch parameters",
+        "items": {
+          "type": "object",
+          "required": ["target_object", "target_parameter"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for this mapping"
+            },
+            "event_type": {
+              "type": "string",
+              "description": "Type of MIDI event to map",
+              "enum": ["cc", "note", "program", "pitchbend", "aftertouch", "poly_aftertouch"],
+              "default": "cc"
+            },
+            "channel": {
+              "type": "integer",
+              "description": "MIDI channel (1-16)",
+              "minimum": 1,
+              "maximum": 16
+            },
+            "number": {
+              "type": "integer",
+              "description": "CC or note number",
+              "minimum": 0,
+              "maximum": 127
+            },
+            "target_object": {
+              "type": "string",
+              "description": "ID of the object to control"
+            },
+            "target_parameter": {
+              "type": "string",
+              "description": "Parameter name to control"
+            },
+            "min": {
+              "type": "number",
+              "description": "Minimum value range for scaling"
+            },
+            "max": {
+              "type": "number",
+              "description": "Maximum value range for scaling"
+            },
+            "mode": {
+              "type": "string",
+              "description": "Mapping mode",
+              "enum": ["absolute", "relative", "toggle", "trigger"],
+              "default": "absolute"
+            },
+            "curve": {
+              "type": "string",
+              "description": "Response curve type",
+              "enum": ["linear", "logarithmic", "exponential", "custom"],
+              "default": "linear"
+            },
+            "custom_curve": {
+              "type": "array",
+              "description": "Array of points defining a custom response curve",
+              "items": {
+                "type": "object",
+                "required": ["x", "y"],
+                "properties": {
+                  "x": {"type": "number", "minimum": 0, "maximum": 1},
+                  "y": {"type": "number", "minimum": 0, "maximum": 1}
+                }
+              }
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether this mapping is currently active",
+              "default": true
+            },
+            "device_name": {
+              "type": "string",
+              "description": "Name of the MIDI device for this mapping (optional)"
+            }
+          }
+        }
+      },
+      "undo_history": {
+        "type": "object",
+        "description": "Undo/redo history for the patch",
+        "additionalProperties": false,
+        "properties": {
+          "undo_stack": {
+            "type": "array",
+            "description": "Stack of undoable actions",
+            "items": {
+              "type": "object",
+              "required": ["type", "timestamp"],
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Type of action",
+                  "enum": [
+                    "connect", "disconnect", "cut", "motion", "paste", 
+                    "apply", "arrange", "canvas_apply", "create", "recreate", 
+                    "font", "object_state", "sequence_start", "sequence_end"
+                  ]
+                },
+                "timestamp": {
+                  "type": "number",
+                  "description": "Timestamp when the action occurred"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable description of the action"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Action-specific data needed for undo operation",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "redo_stack": {
+            "type": "array",
+            "description": "Stack of redoable actions",
+            "items": {
+              "type": "object",
+              "required": ["type", "timestamp"],
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "description": "Type of action",
+                  "enum": [
+                    "connect", "disconnect", "cut", "motion", "paste", 
+                    "apply", "arrange", "canvas_apply", "create", "recreate", 
+                    "font", "object_state", "sequence_start", "sequence_end"
+                  ]
+                },
+                "timestamp": {
+                  "type": "number",
+                  "description": "Timestamp when the action occurred"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Human-readable description of the action"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Action-specific data needed for redo operation",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "clean_state": {
+            "type": "integer",
+            "description": "Index in the undo stack representing the last saved state"
+          },
+          "max_undo_depth": {
+            "type": "integer",
+            "description": "Maximum number of undo steps to keep",
+            "minimum": 0,
+            "default": 100
+          }
+        }
+      },
+      "groups": {
+        "type": "array",
+        "description": "Logical groupings of objects for organizational purposes",
+        "items": {
+          "type": "object",
+          "required": ["id", "name", "objects"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the group"
+            },
+            "name": {
+              "type": "string",
+              "description": "Name of the group (e.g., 'Synth Voice 1', 'Effects Chain')"
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional description of the group's function"
+            },
+            "objects": {
+              "type": "array",
+              "description": "IDs of objects included in this group",
+              "items": {
+                "type": "string"
+              }
+            },
+            "color": {
+              "type": "array",
+              "description": "Optional RGB color for visual identification of the group",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "tags": {
+              "type": "array",
+              "description": "Optional tags for categorizing groups",
+              "items": {
+                "type": "string"
+              }
+            },
+            "collapsed": {
+              "type": "boolean",
+              "description": "Whether the group is initially collapsed in UI representations",
+              "default": false
+            }
+          }
+        }
+      },
+      "patch_hierarchy": {
+        "type": "object",
+        "description": "Hierarchical structure for multi-patch projects",
+        "additionalProperties": false,
+        "properties": {
+          "parent_patch": {
+            "type": "object",
+            "description": "Information about the parent patch, if this is a subpatch or abstraction",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path to the parent patch file"
+              },
+              "name": {
+                "type": "string",
+                "description": "Name of the parent patch"
+              },
+              "is_abstraction": {
+                "type": "boolean",
+                "description": "Whether this patch is used as an abstraction in the parent",
+                "default": false
+              },
+              "is_subpatch": {
+                "type": "boolean",
+                "description": "Whether this patch is a subpatch in the parent",
+                "default": false
+              }
+            }
+          },
+          "children": {
+            "type": "array",
+            "description": "Child patches (subpatches and abstractions used in this patch)",
+            "items": {
+              "type": "object",
+              "required": ["id", "path"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the child patch"
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path to the child patch file (for abstractions) or empty for subpatches"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the child patch"
+                },
+                "is_abstraction": {
+                  "type": "boolean",
+                  "description": "Whether this is an abstraction",
+                  "default": false
+                },
+                "is_subpatch": {
+                  "type": "boolean",
+                  "description": "Whether this is a subpatch",
+                  "default": false
+                },
+                "object_id": {
+                  "type": "string",
+                  "description": "ID of the corresponding object in the objects array"
+                }
+              }
+            }
+          },
+          "project_root": {
+            "type": "string",
+            "description": "Path to the root directory of the project"
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "Dependencies on other patches not directly included",
+            "items": {
+              "type": "object",
+              "required": ["path"],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Path to the dependency patch"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the dependency"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Why this dependency is needed"
+                }
+              }
+            }
+          }
+        }
+      },
+      "preset_morphing": {
+        "type": "object",
+        "description": "Configuration for smooth transitions between presets",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether preset morphing is enabled",
+            "default": false
+          },
+          "default_interpolation_time": {
+            "type": "number",
+            "description": "Default time in milliseconds for morphing between presets",
+            "minimum": 0,
+            "default": 1000
+          },
+          "morphs": {
+            "type": "array",
+            "description": "Predefined morph transitions between specific presets",
+            "items": {
+              "type": "object",
+              "required": ["source_preset_id", "target_preset_id"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for this morph"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Optional name for this morph"
+                },
+                "source_preset_id": {
+                  "type": "string",
+                  "description": "ID of the starting preset"
+                },
+                "target_preset_id": {
+                  "type": "string",
+                  "description": "ID of the ending preset"
+                },
+                "interpolation_time": {
+                  "type": "number",
+                  "description": "Time in milliseconds for this specific morph",
+                  "minimum": 0
+                },
+                "curve_type": {
+                  "type": "string",
+                  "description": "Type of interpolation curve",
+                  "enum": ["linear", "exponential", "logarithmic", "s-curve", "custom"],
+                  "default": "linear"
+                },
+                "custom_curve": {
+                  "type": "array",
+                  "description": "Points defining a custom interpolation curve (normalized 0-1)",
+                  "items": {
+                    "type": "object",
+                    "required": ["x", "y"],
+                    "properties": {
+                      "x": {"type": "number", "minimum": 0, "maximum": 1},
+                      "y": {"type": "number", "minimum": 0, "maximum": 1}
+                    }
+                  }
+                },
+                "parameters": {
+                  "type": "array",
+                  "description": "Specific parameters to include in this morph (empty means all)",
+                  "items": {
+                    "type": "object",
+                    "required": ["object_id", "parameter"],
+                    "properties": {
+                      "object_id": {"type": "string"},
+                      "parameter": {"type": "string"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "current_morph": {
+            "type": "object",
+            "description": "Information about any currently active morph",
+            "additionalProperties": false,
+            "properties": {
+              "active": {
+                "type": "boolean",
+                "description": "Whether a morph is currently in progress",
+                "default": false
+              },
+              "source_preset_id": {
+                "type": "string",
+                "description": "ID of the starting preset"
+              },
+              "target_preset_id": {
+                "type": "string",
+                "description": "ID of the ending preset"
+              },
+              "progress": {
+                "type": "number",
+                "description": "Current progress of the morph (0-1)",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "start_time": {
+                "type": "number",
+                "description": "Timestamp when the morph started"
+              },
+              "end_time": {
+                "type": "number",
+                "description": "Expected timestamp when the morph will complete"
+              }
+            }
+          }
+        }
+      },
+      "live_code": {
+        "type": "object",
+        "description": "Configuration for live coding and expression evaluation",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether live coding features are enabled",
+            "default": false
+          },
+          "scripts": {
+            "type": "array",
+            "description": "Stored scripts that can be executed",
+            "items": {
+              "type": "object",
+              "required": ["id", "code"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the script"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Human-readable name for the script"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of what the script does"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "Script code content"
+                },
+                "language": {
+                  "type": "string",
+                  "description": "Language of the script",
+                  "enum": ["pd", "expr", "javascript", "lua", "python"],
+                  "default": "pd"
+                },
+                "key_binding": {
+                  "type": "string",
+                  "description": "Optional keyboard shortcut to execute this script"
+                },
+                "auto_execute": {
+                  "type": "boolean",
+                  "description": "Whether to execute this script automatically on patch load",
+                  "default": false
+                },
+                "last_executed": {
+                  "type": "string",
+                  "description": "ISO timestamp of last execution",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "expressions": {
+            "type": "array",
+            "description": "Dynamic expressions to evaluate",
+            "items": {
+              "type": "object",
+              "required": ["id", "expression"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique identifier for the expression"
+                },
+                "expression": {
+                  "type": "string",
+                  "description": "Mathematical or logical expression to evaluate"
+                },
+                "variables": {
+                  "type": "object",
+                  "description": "Variable bindings for the expression",
+                  "additionalProperties": {
+                    "oneOf": [
+                      { "type": "string" },
+                      { "type": "number" },
+                      { "type": "boolean" },
+                      { 
+                        "type": "object",
+                        "properties": {
+                          "object_id": { "type": "string" },
+                          "parameter": { "type": "string" }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "result_target": {
+                  "type": "object",
+                  "description": "Where to send the expression result",
+                  "additionalProperties": false,
+                  "properties": {
+                    "object_id": {
+                      "type": "string",
+                      "description": "ID of the target object"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "description": "Parameter to set on the target object"
+                    }
+                  }
+                },
+                "trigger_source": {
+                  "type": "object",
+                  "description": "Object that triggers this expression's evaluation",
+                  "additionalProperties": false,
+                  "properties": {
+                    "object_id": {
+                      "type": "string",
+                      "description": "ID of the source object"
+                    },
+                    "event": {
+                      "type": "string",
+                      "description": "Event type that triggers evaluation"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "execution_engine": {
+            "type": "object",
+            "description": "Configuration for the execution engine",
+            "additionalProperties": false,
+            "properties": {
+              "engine_type": {
+                "type": "string",
+                "description": "Type of execution engine to use",
+                "enum": ["internal", "external"],
+                "default": "internal"
+              },
+              "external_engine_path": {
+                "type": "string",
+                "description": "Path to external script execution engine (if used)"
+              },
+              "timeout": {
+                "type": "number",
+                "description": "Execution timeout in milliseconds",
+                "minimum": 0,
+                "default": 1000
+              },
+              "sandbox": {
+                "type": "boolean",
+                "description": "Whether to run code in a sandboxed environment",
+                "default": true
+              }
+            }
+          }
+        }
+      }
+    }
+  }

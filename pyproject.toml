@@ -1,0 +1,13 @@
+[project]
+name = "pd-mcp-server"
+version = "0.1.0"
+description = "A Model Context Protocol (MCP) server for Pure Data, an open-source visual programming language and patchable environment for real-time computer music."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "argparse>=1.4.0",
+    "asyncio>=3.4.3",
+    "jsonschema>=4.23.0",
+    "mcp[cli]>=1.4.1",
+    "python-osc>=1.9.3",
+]

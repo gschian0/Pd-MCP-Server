@@ -1,0 +1,121 @@
+{
+    "metadata": {
+      "version": "1.0",
+      "description": "MCP tool definitions for Pure Data integration",
+      "author": "Pd-MCP Development Team",
+      "last_updated": "2024-06-10"
+    },
+    "mcp_tools": [
+      {
+        "name": "create_object",
+        "description": "Create a new Pd object.",
+        "parameters": {
+          "object_type": {"type": "string", "description": "Type of Pd object (e.g., osc~, dac~)"},
+          "args": {"type": "array", "items": {"type": "string"}, "description": "Arguments for the object"},
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {"type": "integer", "description": "X position on canvas"},
+              "y": {"type": "integer", "description": "Y position on canvas"}
+            }
+          }
+        },
+        "response": {
+          "object_id": {"type": "string", "description": "Generated unique identifier for the object"}
+        }
+      },
+      {
+        "name": "delete_object",
+        "description": "Delete a Pd object.",
+        "parameters": {
+          "object_id": {"type": "string", "description": "ID of the object to delete"}
+        },
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "Status of the deletion"}
+        }
+      },
+      {
+        "name": "connect_objects",
+        "description": "Create a connection between two Pd objects.",
+        "parameters": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "description": "ID of the source object"},
+              "port": {"type": "integer", "description": "Source outlet port index"}
+            }
+          },
+          "destination": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string", "description": "ID of the destination object"},
+              "port": {"type": "integer", "description": "Destination inlet port index"}
+            }
+          }
+        },
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "Connection status"}
+        }
+      },
+      {
+        "name": "disconnect_objects",
+        "description": "Remove an existing connection between two Pd objects.",
+        "parameters": {
+          "source_id": {"type": "string", "description": "ID of the source object"},
+          "destination_id": {"type": "string", "description": "ID of the destination object"}
+        },
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "Disconnection status"}
+        }
+      },
+      {
+        "name": "set_param",
+        "description": "Modify a parameter of an existing Pd object.",
+        "parameters": {
+          "object_id": {"type": "string", "description": "ID of the object"},
+          "parameter": {"type": "string", "description": "Parameter name to modify"},
+          "value": {"type": "string", "description": "New value for the parameter"}
+        },
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "Update status"}
+        }
+      },
+      {
+        "name": "start_dsp",
+        "description": "Enable DSP processing in Pure Data.",
+        "parameters": {},
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "DSP start status"}
+        }
+      },
+      {
+        "name": "stop_dsp",
+        "description": "Disable DSP processing in Pure Data.",
+        "parameters": {},
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "DSP stop status"}
+        }
+      },
+      {
+        "name": "save_patch",
+        "description": "Save the current Pd patch.",
+        "parameters": {
+          "file_path": {"type": "string", "description": "Path to save the patch file"}
+        },
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "Save operation status"}
+        }
+      },
+      {
+        "name": "load_patch",
+        "description": "Load a Pd patch from a file.",
+        "parameters": {
+          "file_path": {"type": "string", "description": "Path to the patch file to load"}
+        },
+        "response": {
+          "status": {"type": "string", "enum": ["success", "error"], "description": "Load operation status"}
+        }
+      }
+    ]
+  }
+  
