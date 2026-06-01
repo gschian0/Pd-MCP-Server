@@ -124,7 +124,7 @@ async def handle_pd_feedback(address: str, *args: Any) -> None:
 
 # MCP Tool Definitions
 @mcp_server.tool()
-def create_object(object_type: str, args: List[str], position: Dict[str, int], ctx: Context) -> Dict[str, Any]:
+def create_object(object_type: str, args: List[Any], position: Dict[str, int], ctx: Context) -> Dict[str, Any]:
     """Create a new Pd object.
     
     This tool creates a new object in the Pure Data patch at the specified position.
@@ -160,9 +160,21 @@ def create_object(object_type: str, args: List[str], position: Dict[str, int], c
     # Debug log for tracking
     logging.info(f"Creating object: {object_type} at position {position} with args {args}")
     
-    # Send the create command to Pure Data: [object_type, x, y, *args]
-    # Note: This format is specifically required by the absolute_final_solution.pd patch
-    pd_osc.send_message("/pd/create", [object_type, position["x"], position["y"]] + args)
+    # Convert string args to numbers where possible so OSC sends floats, not strings.
+    # Pd expects numeric arguments (e.g. 440) as numbers, not as the string "440".
+    converted_args = []
+    for a in args:
+        if isinstance(a, str):
+            try:
+                converted_args.append(float(a))
+            except ValueError:
+                converted_args.append(a)
+        else:
+            converted_args.append(a)
+
+    # Send the create command to Pure Data: [x, y, object_type, *args]
+    # The Pd patch prepends "obj" to get: obj x y type [args]
+    pd_osc.send_message("/pd/create", [position["x"], position["y"], object_type] + converted_args)
     
     # Assign and track the numeric index using global variables
     # This is critical for properly managing connections between objects
@@ -233,12 +245,12 @@ def connect_objects(source: Dict[str, Any], destination: Dict[str, Any], ctx: Co
     Example:
         connect_objects({"id": "osc~_100_100", "port": 0}, {"id": "dac~_200_100", "port": 0}, ctx)
     """
-    global object_indices
-    
+    global object_indices, next_index
+
     pd_osc = ctx.request_context.lifespan_context.get("pd_osc")
     if not pd_osc:
         return {"status": "error", "message": "OSC connection not initialized"}
-    
+
     # Get the source and destination IDs
     source_id = source["id"]
     dest_id = destination["id"]
@@ -344,6 +356,36 @@ def get_param(object_id: str, parameter: str, ctx: Context) -> Dict[str, str]:
     return {"status": "success", "value": "unknown"}
 
 @mcp_server.tool()
+def clear_workspace(ctx: Context) -> Dict[str, Any]:
+    """Clear all objects from the Pd workspace subpatch and reset index tracking.
+
+    This sends /pd/clear to Pure Data, which clears the workspace subpatch,
+    and resets the server-side object index counter so new objects start from 0.
+
+    Args:
+        ctx: MCP context
+
+    Returns:
+        Response with status and number of objects cleared
+    """
+    global object_indices, next_index
+
+    pd_osc = ctx.request_context.lifespan_context.get("pd_osc")
+    if not pd_osc:
+        return {"status": "error", "message": "OSC connection not initialized"}
+
+    cleared_count = len(object_indices)
+    pd_osc.send_message("/pd/clear", [])
+
+    # Reset tracking
+    object_indices = {}
+    next_index = 0
+
+    logging.info(f"Workspace cleared. Reset index counter (was tracking {cleared_count} objects)")
+
+    return {"status": "success", "objects_cleared": cleared_count, "next_index": 0}
+
+@mcp_server.tool()
 def start_dsp(ctx: Context) -> Dict[str, str]:
     """Enable DSP processing in Pure Data.
     
@@ -381,26 +423,6 @@ def stop_dsp(ctx: Context) -> Dict[str, str]:
         return {"status": "error", "message": "OSC connection not initialized"}
     
     pd_osc.send_message("/pd/dsp", [0])
-    return {"status": "success"}
-
-@mcp_server.tool()
-def refresh_gui(ctx: Context) -> Dict[str, str]:
-    """Force Pure Data to refresh its GUI.
-    
-    This can be useful after making multiple changes to ensure
-    the visual state of Pure Data matches the internal state.
-    
-    Args:
-        ctx: MCP context
-        
-    Returns:
-        Response with status
-    """
-    pd_osc = ctx.request_context.lifespan_context.get("pd_osc")
-    if not pd_osc:
-        return {"status": "error", "message": "OSC connection not initialized"}
-    
-    pd_osc.send_message("/pd/gui_refresh", [1])
     return {"status": "success"}
 
 @mcp_server.tool()

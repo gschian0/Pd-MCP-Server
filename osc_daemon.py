@@ -44,7 +44,6 @@ class PureDataOSC:
         osc_client: The client for sending OSC messages
         dispatcher: The OSC message dispatcher for handling incoming messages
         feedback_handlers: Registered callback handlers for feedback messages
-        object_indices: Dictionary mapping object IDs to their numeric indices
     """
     
     def __init__(
@@ -70,15 +69,11 @@ class PureDataOSC:
         self.osc_client = SimpleUDPClient(self.host, self.port)
         self.dispatcher = Dispatcher()
         self.feedback_handlers: Dict[str, List[Callable]] = {}
-        
-        # NEW: Add tracking for object indices to support our numeric indexing system
-        self.object_indices: Dict[str, int] = {}
-        self.next_index = 0
-        
+
         # Configure default feedback handler to route incoming messages
         self.dispatcher.map("/pd/feedback/*", self._handle_feedback)
     
-    def send_message(self, command: str, args: List[Any] = []) -> bool:
+    def send_message(self, command: str, args: Optional[List[Any]] = None) -> bool:
         """Sends an OSC command to Pure Data.
         
         This method handles sending commands to Pure Data and also takes care of
@@ -94,130 +89,19 @@ class PureDataOSC:
         Example:
             pd_osc.send_message("/pd/create", ["osc~", 100, 100, 440])
         """
+        if args is None:
+            args = []
         try:
-            # NEW: Debug log to show exactly what we're sending
             args_str = ', '.join([str(arg) for arg in args])
             logging.debug(f"OSC Message Format: {command} [{args_str}]")
             
             # Send the original command
             self.osc_client.send_message(command, args)
             logging.info(f"➡️ Sent to Pd: {command} {args}")
-            
-            # Force GUI refresh after commands that modify the patch
-            # Skip for commands that don't modify the visual patch
-            if any(cmd in command for cmd in ['/pd/create', '/pd/delete', '/pd/connect', '/pd/disconnect']):
-                # We use several different refresh methods because Pure Data's GUI refresh
-                # behavior can be inconsistent. By sending multiple types of refresh commands,
-                # we increase the likelihood that the GUI will update properly.
-                
-                # 1. Send direct GUI refresh command
-                self.osc_client.send_message("/pd/gui_refresh", [1])
-                
-                # 2. Send a print message that will cause activity in the patch
-                self.osc_client.send_message("/pd/print", ["GUI refresh triggered"])
-                
-                # 3. Use the 'pd' message system (built into Pd) 
-                self.osc_client.send_message("/pd", ["refresh"])
-                
-                logging.debug("➡️ Sent GUI refresh commands to Pd")
-            
             return True
         except Exception as e:
             logging.error(f"❌ Error sending OSC message: {e}")
             return False
-    
-    # NEW: Method for dynamic patch object creation with correct format for absolute_final_solution.pd
-    def create_object(self, object_type: str, x: int, y: int, *args) -> int:
-        """Creates an object in Pure Data with the absolute_final_solution.pd format.
-        
-        This method creates an object in the Pure Data patch and tracks its index
-        for later use in connections.
-        
-        Args:
-            object_type: Type of Pure Data object (e.g., "osc~", "dac~")
-            x: X coordinate on the canvas
-            y: Y coordinate on the canvas
-            *args: Additional arguments for the object
-            
-        Returns:
-            The index of the created object
-            
-        Example:
-            index = pd_osc.create_object("osc~", 100, 100, 440)
-        """
-        # Create a unique ID for this object based on type and position
-        object_id = f"{object_type}_{x}_{y}"
-        
-        # Assign a numeric index to this object
-        object_index = self.next_index
-        self.next_index += 1
-        
-        # Store the mapping for future reference
-        self.object_indices[object_id] = object_index
-        
-        # Send the create message in the correct format
-        # Format: [object_type, x, y, *args]
-        self.send_message("/pd/create", [object_type, x, y] + list(args))
-        
-        return object_index
-    
-    # NEW: Method for connecting objects using numeric indices
-    def connect_objects_by_index(self, source_index: int, source_outlet: int, 
-                                 dest_index: int, dest_inlet: int) -> bool:
-        """Connects two Pure Data objects using their numeric indices.
-        
-        This method is designed to work with the absolute_final_solution.pd format
-        which uses numeric indices for connections.
-        
-        Args:
-            source_index: Index of the source object
-            source_outlet: Outlet number of the source object
-            dest_index: Index of the destination object
-            dest_inlet: Inlet number of the destination object
-            
-        Returns:
-            True if successful, False otherwise
-            
-        Example:
-            pd_osc.connect_objects_by_index(0, 0, 1, 0)
-        """
-        return self.send_message("/pd/connect", [source_index, source_outlet, dest_index, dest_inlet])
-    
-    # NEW: Method for connecting objects using their IDs
-    def connect_objects_by_id(self, source_id: str, source_outlet: int,
-                             dest_id: str, dest_inlet: int) -> bool:
-        """Connects two Pure Data objects using their string IDs.
-        
-        This method looks up the numeric indices for the given object IDs
-        and then connects them using the absolute_final_solution.pd format.
-        
-        Args:
-            source_id: ID of the source object
-            source_outlet: Outlet number of the source object
-            dest_id: ID of the destination object
-            dest_inlet: Inlet number of the destination object
-            
-        Returns:
-            True if successful, False otherwise
-            
-        Example:
-            pd_osc.connect_objects_by_id("osc~_100_100", 0, "dac~_200_100", 0)
-        """
-        # Check if we have indices for these objects
-        if source_id not in self.object_indices:
-            logging.error(f"Unknown source object ID: {source_id}")
-            return False
-        
-        if dest_id not in self.object_indices:
-            logging.error(f"Unknown destination object ID: {dest_id}")
-            return False
-        
-        # Get the indices
-        source_index = self.object_indices[source_id]
-        dest_index = self.object_indices[dest_id]
-        
-        # Connect using indices
-        return self.connect_objects_by_index(source_index, source_outlet, dest_index, dest_inlet)
     
     def register_feedback_handler(self, address: str, handler: Callable) -> None:
         """Register a handler for feedback messages from Pure Data.
