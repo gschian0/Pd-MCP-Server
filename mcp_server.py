@@ -172,6 +172,16 @@ def create_object(object_type: str, args: List[Any], position: Dict[str, int], c
         else:
             converted_args.append(a)
 
+    # Drop trailing zero args from signal objects (those ending with ~).
+    # When signal objects like +~ or *~ are created dynamically via "obj x y +~ 0",
+    # Pd 0.55+ treats the second inlet as a float inlet instead of a signal inlet.
+    # This causes "audio signal outlet connected to nonsignal inlet" errors and
+    # breaks the signal chain. Omitting the 0 arg (e.g. "obj x y +~") keeps both
+    # inlets as signal inlets, which is the correct default behavior.
+    if object_type.endswith("~"):
+        while converted_args and converted_args[-1] == 0.0:
+            converted_args.pop()
+
     # Send the create command to Pure Data: [x, y, object_type, *args]
     # The Pd patch prepends "obj" to get: obj x y type [args]
     pd_osc.send_message("/pd/create", [position["x"], position["y"], object_type] + converted_args)
