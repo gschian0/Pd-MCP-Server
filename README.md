@@ -143,17 +143,6 @@ You can then ask Claude to modify the patch, add effects, change frequencies, or
 4. **Message Format Errors**: Ensure message formats match the expected format in the Pure Data patch
 5. **Lost Objects**: If object tracking gets confused, try restarting both the MCP server and Pure Data
 
-## Next Steps
-
-1. **Enhanced Error Reporting**: Improve feedback from Pure Data for better error messages
-2. **Visualization Tools**: Add tools to visualize the current patch state
-3. **Object Library Integration**: Support loading external libraries and abstractions
-4. **Patch Persistence**: Implement better state management for patches
-5. **Audio File Support**: Add tools for working with audio files and samples
-6. **MIDI Integration**: Add MIDI input/output capabilities
-7. **GUI Object Support**: Add support for GUI objects like sliders and number boxes
-8. **Collaborative Features**: Support multiple simultaneous connections
-9. **Documentation Generator**: Create automatic documentation from the JSON schema
 
 
 ## Known Limitations
