@@ -2,21 +2,19 @@
 
 This project provides integration between Claude AI and Pure Data through the Model Context Protocol (MCP). With this integration, Claude can dynamically create, modify, and control Pure Data patches through natural language.
 
-## Known Issues
-**The example patch (`example patch.pd`) is not working correctly.**
-
 ## Overview
 
 The system consists of three core components:
 
 1. **MCP Server** (`mcp_server.py`): Implements the Model Context Protocol interface for Claude
 2. **OSC Daemon** (`osc_daemon.py`): Handles OSC communication with Pure Data
-3. **Pure Data Patch** (`absolute_final_solution.pd`): A dynamic patching solution that receives OSC messages
+3. **Pure Data Patch** (`example_patch.pd`): A dynamic patching solution that receives OSC messages
 
 ## Features
 
 - **Dynamic Object Creation**: Create any Pure Data object on demand through Claude
 - **Connection Management**: Connect objects together to build complex signal flows
+- **Workspace Management**: Clear all objects and reset state with `clear_workspace`
 - **DSP Control**: Start and stop audio processing remotely
 - **Parameter Control**: Modify parameters of objects in real-time
 - **Global Object Tracking**: Reliable index-based connection system
@@ -92,6 +90,38 @@ git clone https://github.com/nikmaniatis/Pd-MCP-Server.git
 
 ---
 
+## Quick Example
+
+Once the MCP server is connected and the Pd patch is listening, you can ask Claude to build patches using natural language:
+
+> "Create an osc~ at 440 Hz, connect it to a dac~, and start DSP."
+
+Claude will call the MCP tools to produce something like:
+
+```
+create_object("osc~", ["440"], {"x": 100, "y": 50})   → index 0
+create_object("*~",   ["0.25"], {"x": 100, "y": 110})  → index 1
+create_object("dac~", [],       {"x": 100, "y": 170})  → index 2
+
+connect_objects({"id": "osc~_100_50",  "port": 0}, {"id": "*~_100_110",  "port": 0})
+connect_objects({"id": "*~_100_110",   "port": 0}, {"id": "dac~_100_170", "port": 0})
+connect_objects({"id": "*~_100_110",   "port": 0}, {"id": "dac~_100_170", "port": 1})
+
+start_dsp()
+```
+
+This creates the following patch in the workspace subpatch:
+
+```
+  osc~ 440
+     |
+  *~ 0.25 (volume)
+    / \
+  dac~ L+R
+```
+
+You can then ask Claude to modify the patch, add effects, change frequencies, or build more complex signal chains — all through conversation.
+
 ## Architecture
 
 ### Message Flow
@@ -113,10 +143,6 @@ git clone https://github.com/nikmaniatis/Pd-MCP-Server.git
 4. **Message Format Errors**: Ensure message formats match the expected format in the Pure Data patch
 5. **Lost Objects**: If object tracking gets confused, try restarting both the MCP server and Pure Data
 
-## JSON Schema
-
-The `pd-schema.json` provides a comprehensive data model for Pure Data patches, supporting validation and serialization of patches. While not directly used in the current MCP tools, it serves as a reference for future development and potential integration with patch serialization/deserialization features.
-
 ## Next Steps
 
 1. **Enhanced Error Reporting**: Improve feedback from Pure Data for better error messages
@@ -129,6 +155,11 @@ The `pd-schema.json` provides a comprehensive data model for Pure Data patches, 
 8. **Collaborative Features**: Support multiple simultaneous connections
 9. **Documentation Generator**: Create automatic documentation from the JSON schema
 
+
+## Known Limitations
+
+- **No delete or disconnect support**: The Pd patch (`example_patch.pd`) only handles `/pd/create`, `/pd/connect`, `/pd/dsp`, and `/pd/clear`. Objects and connections cannot be individually removed — use `clear_workspace` to reset the entire workspace instead.
+- **Signal objects with zero arguments**: When signal objects like `+~` or `*~` are created with a `0` argument via dynamic patching (e.g., `obj 100 100 +~ 0`), Pd 0.55+ treats the second inlet as a float inlet instead of a signal inlet, breaking signal connections. The MCP server automatically strips trailing zero arguments from signal objects to avoid this issue.
 
 ## License
 

@@ -9,6 +9,7 @@ wheels/
 examples/
 .mcp.json
 .claude
+pd-schema.json
 # Virtual environments
 .venv
 
