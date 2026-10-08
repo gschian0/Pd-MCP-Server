@@ -36,6 +36,19 @@ The system consists of three core components:
   - `jsonschema`
 - [`uv` package manager](https://github.com/astral-sh/uv)
 
+### Optional externals (for the recipes)
+
+Some recipes and example instruments use Pd externals, installed via
+**Help → Find externals** (Deken):
+
+- [`faustgen~`](https://github.com/CICM/pd-faustgen) — embeds the FAUST
+  compiler in Pd, so you can write and run FAUST `.dsp` code inside a patch
+- `Gem` — graphics/multimedia (see `BUILDING-Pd-GEM-IntelMac.md` for building
+  it on Intel Macs, where the prebuilt binaries don't load)
+
+These aren't required for the core MCP server — only for the audio/visual
+instrument recipes.
+
 ### **Install `uv`**
 
 #### On macOS and Linux:

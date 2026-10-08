@@ -17,3 +17,4 @@ pd-schema.json
 build_ids.json
 wavepacket_dev.pd
 dsp/
+uv.lock
