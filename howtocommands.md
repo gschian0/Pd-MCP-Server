@@ -14,6 +14,151 @@ This document provides detailed instructions for implementing MCP (Model Context
 8. [Testing and Validation](#testing-and-validation)
 9. [Documentation Standards](#documentation-standards)
 10. [Integration with the Schema](#integration-with-the-schema)
+11. [FAUST Setup and Fast Iteration](#faust-setup-and-fast-iteration)
+
+## FAUST Setup and Fast Iteration
+
+### Development Rule: Sound First
+
+Develop and audition the voice in one existing `faustgen~` object first.
+Change one synthesis detail, save the DSP, recompile, and compare by ear at
+matched levels. Add envelopes, sequencing, and a full control surface only
+after the core sound is approved. A successful compile or finite render does
+not establish sound quality or fidelity to the reference patch.
+
+Never quit, kill, restart Pd, reset its preferences, or clear a user workspace
+to iterate. Preserve open patches and pasted objects. Reload only the DSP
+through the object's `compile` message. Keep experiments in separate files.
+
+### What Is Installed on This Mac
+
+- Pd 0.56-2: `/Applications/Pd-0.56-2.app`.
+- CICM Pd `faustgen~`: `/Users/user/Documents/Pd/externals/faustgen~`.
+    The folder contains `faustgen~.pd_darwin`, help, source, and `libs/`.
+    This external was already installed when work began; its original package
+    version and installation method were not recorded. Do not claim we built it.
+- `faustgen~` embeds an LLVM-based FAUST JIT compiler. There was no standalone
+    `faust` executable on PATH during the wave-packet work. The exact embedded
+    compiler version still needs recording from the external's diagnostics.
+- Node v20.20.2 and npm 10.8.2 were used for offline validation.
+- We installed `@grame/faustwasm` 0.19.0 into
+    `/tmp/wavepacket-validation`; its compiler reported FAUST 2.90.0.
+    Temporary directories are disposable, not the archive of this work.
+
+The CICM source project is https://github.com/CICM/pd-faustgen.
+For another machine, install a compatible package using Pd's Find Externals
+or follow that project's build instructions. Match CPU architecture and Pd
+sample precision. Retain the package, version, checksum, and bundled libraries
+when an installation works. Test with its help patch before building a rig.
+Historical LLVM instructions shipped with this external are not verified
+instructions for building against current LLVM releases.
+
+### Minimal Edit / Compile / Listen Loop
+
+Add the external's directory to the patch search path if needed:
+
+```text
+[declare -path /Users/user/Documents/Pd/externals/faustgen~]
+[faustgen~ /Users/user/Music/MCP/pd-instruments/dsp/wavepacket]
+```
+
+The installed Pd port uses the DSP file as its creation argument, conventionally
+without `.dsp`. It supports these messages at the left inlet:
+
+```text
+compile
+autocompile 1 100
+autocompile 0
+print
+```
+
+`autocompile 1 100` checks for edits every 100 ms, according to its help patch.
+Use manual `compile` if automatic recompilation interrupts auditioning.
+Save the source externally, then compile; clicking the object opens its source
+in the system editor. Do not assume it is a Max-style embedded code editor.
+The Max `read` message is not the loading API documented by this Pd port.
+
+Parameter messages are selectors followed by numeric atoms:
+
+```text
+fundamental 88
+center 127
+bandwidth 17
+run 0
+```
+
+For a slider use `[list prepend fundamental] -> [list trim] -> [faustgen~]`.
+This avoids dynamically constructed `$1` message-box escaping. With OSC,
+send numeric atoms as numbers, not strings. An OSC send succeeding does not
+prove delivery, compilation, or audible parameter changes.
+
+Keep stereo outlets separate. Use a deliberate low output gain and compare
+the reference and candidate at matched loudness. `*~ 0.4` is attenuation, not
+a limiter. In the wave-packet source, `output~` uses a fourth-power volume
+curve; copying its displayed value into a linear gain is not equivalent.
+Our first translation also added envelope/sequence changes before establishing
+an audible match. It passed offline tests but the user rejected its sound.
+
+### Reproduce the Offline Compiler Check
+
+From this repository, install the pinned validator in a disposable directory:
+
+```bash
+npm install --prefix /tmp/wavepacket-validation --save-exact @grame/faustwasm@0.19.0
+node /tmp/wavepacket-validation/node_modules/@grame/faustwasm/scripts/faust2wasm.js \
+    ../pd-instruments/dsp/wavepacket.dsp \
+    /tmp/wavepacket-validation/out -no-template \
+    -I /Users/user/Documents/Pd/externals/faustgen~/libs
+```
+
+This writes WebAssembly and DSP metadata, not a native Pd external. Passing
+the installed libraries reduces library API differences, but the compiler
+is still newer than the one embedded in the installed `faustgen~`.
+Always test the final code inside that external too.
+
+Verified in this session: compile success, two outputs, finite nonzero offline
+audio under A and B with random sequencing, and RUN-off release to silence.
+Not verified: an audible match to the original, old JIT compiler compatibility,
+or shared transport synchronization with the dub machine.
+
+### Compiling for Other Systems
+
+FAUST separates a portable DSP description from a target architecture wrapper.
+Keep `.dsp` sources and presets as the source of truth, not generated binaries.
+
+| Target | Route | Important distinction |
+| --- | --- | --- |
+| Pd on macOS/Linux/Windows | Compatible `faustgen~` and the same DSP source | The external/JIT must support that host and CPU. |
+| Browser / Web Audio | Pinned `faustwasm`, optionally its standalone export | WASM is portable; audio requires a browser gesture. |
+| Native C++ | Standalone FAUST compiler with `faust -lang cpp` | Generated DSP code still needs an audio/UI wrapper. |
+| Native Pd external | FAUST's `faust2puredata` toolchain where available | Build on/for the target OS, CPU, and Pd precision. |
+| JACK / standalone audio app | Appropriate FAUST architecture tool | Requires the target audio SDK and native build tools. |
+
+Examples for a separately installed standalone compiler (not run here):
+
+```bash
+faust --version
+faust -lang cpp wavepacket.dsp -o wavepacket.cpp
+faust2puredata wavepacket.dsp
+```
+
+Check tool availability and that version's help before using these commands.
+Our WASM install does not install these native commands. A macOS `.pd_darwin`
+binary cannot simply be copied to Linux or Windows. Intel-to-ARM native exports
+need an appropriate compiler/SDK; WASM validation is not a native cross-build.
+
+### Preserve Each Accepted Iteration
+
+Record the DSP, containing Pd patch, parameter values, compiler/library
+versions, exact build command, and a short audio reference with sample rate.
+Keep A/B snapshots before replacing a working sound. Document failed experiments
+as failed, including what was heard. Archive dependency versions and lockfiles
+when promoting an experiment to a maintained recipe.
+
+Current work is outside the server repository in `../pd-instruments/`:
+`dsp/wavepacket.dsp`, `wavepacket_faust.pd`, `presets/`, and
+`WAVEPACKET-FAUST.md`. Back up that folder alongside this repository;
+committing only this repository will not preserve those sibling files.
 
 ## Architecture Overview
 
